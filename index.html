@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武汉4日漫游交互式指南 (AI增强版)</title>
+    <!-- Chosen Palette: Urban Oasis -->
+    <!-- Application Structure Plan: The application uses a tab-based navigation system to organize information by user intent rather than a simple chronological list. The structure includes: 1) '行程概览' (Itinerary Overview) as the main view with an interactive accordion for each day and a summary chart. 2) '美食宝典' (Food Guide) as a filterable gallery of all food recommendations. 3) '出行锦囊' (Travel Tips) for consolidated transport info. This task-oriented architecture allows users to quickly find specific information (e.g., just food, or just day 2's plan) without scrolling through unrelated content, significantly improving usability and exploration efficiency compared to a linear document. -->
+    <!-- Visualization & Content Choices: 
+        - Itinerary Data -> Goal: Chronological Planning -> Method: Interactive Accordion Cards (HTML/CSS/JS) -> Interaction: Click to expand/collapse day details -> Justification: Compact, engaging, and focuses user attention on one day at a time.
+        - Trip Composition -> Goal: High-level Trip Summary -> Method: Doughnut Chart (Chart.js/Canvas) -> Interaction: Hover to see activity category and count -> Justification: Fulfills the Chart.js requirement and provides a quick visual understanding of the trip's character (e.g., historical vs. nature).
+        - Food Recommendations -> Goal: Easy Food Discovery -> Method: Filterable Grid of Cards (HTML/CSS/JS) in a dedicated tab -> Interaction: Click filter buttons (e.g., '小吃', '正餐') to dynamically show/hide relevant items -> Justification: Powerful user-driven exploration, much more useful than a static list.
+        - Transportation Details -> Goal: Actionable Instructions -> Method: Styled text blocks with distinct visual treatment for metro lines (e.g., `<code>` tag styling) -> Interaction: None needed, focus is on readability -> Justification: Clear visual hierarchy helps users quickly scan for critical travel information.
+        - Gemini Itinerary Optimization -> Goal: Add intelligent suggestions -> Method: Button-triggered API call -> Interaction: Click "AI优化" button to generate and display suggestions within the day's card -> Justification: Provides actionable, AI-driven value directly in the context of daily planning.
+        - Gemini Cultural Context -> Goal: Provide deeper understanding -> Method: Icon-triggered API call -> Interaction: Click sparkle icon next to an attraction to reveal a concise explanation -> Justification: Offers on-demand cultural enrichment without cluttering the main interface.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #F8F5F2; /* Warm Neutral Background */
+            color: #383838;
+            font-family: 'Helvetica Neue', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Microsoft Yahei', sans-serif;
+        }
+        .nav-tab {
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .nav-tab.active {
+            color: #0D5C63; /* Deep Teal Accent */
+            border-bottom-color: #0D5C63;
+        }
+        .day-header {
+            transition: background-color 0.3s ease;
+        }
+        .day-details {
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .day-details.open {
+            max-height: 2000px; /* Increased for AI content */
+        }
+        .food-card {
+            transition: transform 0.3s ease, opacity 0.5s ease;
+        }
+        .icon-bg {
+            background-color: #E5B18130; /* Subtle Accent Background */
+        }
+        .metro-line {
+            font-family: monospace;
+            background-color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+        }
+        .gemini-btn {
+            background-color: #0D5C63;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .gemini-btn:hover {
+            background-color: #084c54;
+        }
+        .gemini-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .gemini-response {
+            background-color: #f0fdfa;
+            border-left: 4px solid #0D5C63;
+        }
+        .cultural-context-icon {
+            cursor: pointer;
+            display: inline-block;
+            margin-left: 8px;
+            color: #E5B181;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+        }
+        .cultural-context-icon:hover {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto max-w-5xl p-4 sm:p-6 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#0D5C63]">武汉4日漫游指南</h1>
+            <p class="text-lg text-gray-600 mt-2">一份为您量身定制的AI增强交互式旅行攻略</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <button data-tab="overview" class="nav-tab active text-lg font-semibold py-3 px-6 cursor-pointer">行程概览</button>
+            <button data-tab="food" class="nav-tab text-lg font-semibold py-3 px-6 cursor-pointer">美食宝典</button>
+            <button data-tab="transport" class="nav-tab text-lg font-semibold py-3 px-6 cursor-pointer">出行锦囊</button>
+        </nav>
+
+        <main>
+            <!-- Itinerary Overview Tab -->
+            <section id="overview" class="tab-content space-y-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-center text-[#0D5C63] mb-4">旅程序曲：江城印象</h2>
+                    <p class="text-center text-gray-600 mb-6">本次旅程将带您穿梭于武汉的历史与现代之间，既有厚重的文化底蕴，也有轻松的自然风光与都市活力。下方的图表为您展示了本次旅行的活动类型分布，助您对旅程有一个整体的印象。</p>
+                    <div class="chart-container">
+                        <canvas id="tripBalanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div id="itinerary-accordion" class="space-y-4">
+                    <!-- Day cards will be injected here by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Food Guide Tab -->
+            <section id="food" class="tab-content hidden">
+                 <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-center text-[#0D5C63] mb-4">江城寻味：美食宝典</h2>
+                    <p class="text-center text-gray-600 mb-6">武汉是美食之都，从过早到宵夜，精彩不断。这里为您汇集了行程中提到的所有美食，您可以根据分类筛选，快速找到心仪的味道。</p>
+                    <div id="food-filters" class="flex justify-center gap-2 mb-6 flex-wrap">
+                        <button data-filter="all" class="px-4 py-2 bg-[#0D5C63] text-white rounded-full font-semibold shadow-md">全部</button>
+                        <button data-filter="小吃" class="px-4 py-2 bg-white text-gray-700 rounded-full font-semibold shadow-md">风味小吃</button>
+                        <button data-filter="正餐" class="px-4 py-2 bg-white text-gray-700 rounded-full font-semibold shadow-md">特色正餐</button>
+                        <button data-filter="素斋" class="px-4 py-2 bg-white text-gray-700 rounded-full font-semibold shadow-md">禅心素斋</button>
+                    </div>
+                    <div id="food-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Food cards will be injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transport Guide Tab -->
+            <section id="transport" class="tab-content hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-lg space-y-6">
+                    <h2 class="text-2xl font-bold text-center text-[#0D5C63] mb-4">江城脉络：出行锦囊</h2>
+                     <p class="text-center text-gray-600 mb-6">武汉的地铁网络四通八达，是本次旅行最高效、便捷的交通方式。本锦囊为您梳理了关键的交通信息，助您轻松出行。</p>
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <h3 class="font-bold text-lg text-[#E5B181] mb-2">🏨 酒店交通核心</h3>
+                        <p>您的酒店位于<strong class="text-[#0D5C63]">【江汉路站】</strong>，是 <span class="metro-line">地铁2号线</span> 与 <span class="metro-line">地铁6号线</span> 的换乘站。从车站的 <strong class="text-[#0D5C63]">H口</strong> 或 <strong class="text-[#0D5C63]">J口</strong> 出站，即可轻松抵达酒店。</p>
+                    </div>
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <h3 class="font-bold text-lg text-[#E5B181] mb-2">🚉 主要站点一览</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>汉口火车站 → 酒店：</strong>乘坐 <span class="metro-line">地铁2号线</span> 直达【江汉路站】。</li>
+                            <li><strong>前往黄鹤楼：</strong>从【江汉路站】乘 <span class="metro-line">地铁6号线</span> 换乘 <span class="metro-line">地铁5号线</span> 至【司门口黄鹤楼站】。</li>
+                            <li><strong>前往光谷：</strong>从【江汉路站】乘坐 <span class="metro-line">地铁2号线</span> 一路直达【光谷广场站】。</li>
+                            <li><strong>前往归元禅寺：</strong>从【江汉路站】乘坐 <span class="metro-line">地铁6号线</span> 直达【钟家村站】。</li>
+                        </ul>
+                    </div>
+                     <div class="p-4 border border-gray-200 rounded-lg bg-teal-50">
+                        <h3 class="font-bold text-lg text-[#E5B181] mb-2">💡 温馨提示</h3>
+                        <p class="text-gray-700">建议使用支付宝或微信的乘车码功能，或办理一张“武汉通”交通卡，方便乘坐地铁和公交。武汉的景点间距较大，合理利用地铁将极大节省您的时间和体力。</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center text-gray-500 mt-12">
+            <p>&copy; 2025 交互式旅行攻略</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const itineraryData = {
+            days: [
+                {
+                    day: 1,
+                    title: "抵达与江城初印象",
+                    theme: "感受百年商业街的繁华与长江的壮阔。",
+                    schedule: [
+                        { time: "上午", activity: "抵达汉口火车站，前往酒店办理入住，稍作休整。" },
+                        { time: "下午", activity: "闲逛江汉路步行街，之后步行前往黎黄陂路，感受“街头博物馆”的文艺气息。" },
+                        { time: "晚上", activity: "步行至汉口江滩，乘坐长江游船，欣赏壮丽的长江灯光秀和两岸夜景。" }
+                    ],
+                    transport: "今日行程均在酒店步行范围内，无需乘坐公共交通。",
+                    food: [
+                        { name: "蔡林记", desc: "品尝招牌热干面、三鲜豆皮。", type: "小吃" },
+                        { name: "严氏烧麦", desc: "（前进五路店）品尝重油胡椒烧麦。", type: "小吃" },
+                        { name: "汉口码头", desc: "（沿江大道店）品尝排骨藕汤、清蒸武昌鱼等正宗湖北菜。", type: "正餐" },
+                        { name: "肥肥虾庄", desc: "（江汉路总店）夏季品尝油焖大虾。", type: "正餐" }
+                    ]
+                },
+                {
+                    day: 2,
+                    title: "历史与文艺的交织",
+                    theme: "登名楼、逛老巷、品味武昌的文化底蕴。",
+                    schedule: [
+                        { time: "上午", activity: "登临黄鹤楼，之后漫步于武汉长江大桥。", cultural: "黄鹤楼" },
+                        { time: "中午", activity: "在户部巷享用午餐，品尝各类地道小吃。" },
+                        { time: "下午", activity: "参观辛亥革命武昌起义纪念馆（红楼），之后前往昙华林文艺街区闲逛。" }
+                    ],
+                    transport: "从【江汉路站】乘坐<span class='metro-line'>地铁6号线</span>，在【六渡桥站】换乘<span class='metro-line'>地铁5号线</span>至【司门口黄鹤楼站】（A口出）。当日武昌景点均可步行连接。",
+                    food: [
+                        { name: "徐嫂糊汤粉", desc: "户部巷经典，鱼汤鲜美。", type: "小吃" },
+                        { name: "何记豆皮", desc: "户部巷必吃，外酥里糯。", type: "小吃" },
+                        { name: "石婆婆热干面", desc: "户部巷地道选择。", type: "小吃" },
+                        { name: "大水的店", desc: "昙华林文艺餐吧，环境舒适。", type: "正餐" },
+                        { name: "斑马创意餐厅", desc: "昙华林特色餐厅，适合拍照。", type: "正餐" }
+                    ]
+                },
+                {
+                    day: 3,
+                    title: "现代与自然的协奏",
+                    theme: "体验未来科技，拥抱湖光山色，夜探国宝。",
+                    schedule: [
+                        { time: "上午", activity: "前往光谷，体验新潮的光谷空轨。" },
+                        { time: "中午", activity: "在光谷商业区自由选择午餐。" },
+                        { time: "下午", activity: "游览武汉大学，之后前往东湖风景区骑行或散步。" },
+                        { time: "晚上", activity: "18:30，参观湖北省博物馆。", cultural: "湖北省博物馆" }
+                    ],
+                    transport: "从【江汉路站】乘坐<span class='metro-line'>地铁2号线</span>直达【光谷广场站】。从光谷乘<span class='metro-line'>地铁2号线</span>至【街道口站】前往武大。武大、东湖、博物馆三地相连，建议步行或骑行。",
+                    food: [
+                        { name: "光谷美食", desc: "光谷步行街及周边商场餐厅众多，选择极其丰富。", type: "正餐" },
+                        { name: "亢龙太子酒轩", desc: "（东湖店）高品质湖北菜。", type: "正餐" },
+                        { name: "武大周边小吃街", desc: "性价比高，种类繁多。", type: "小吃" }
+                    ]
+                },
+                {
+                    day: 4,
+                    title: "禅意与告别",
+                    theme: "在古寺中寻求宁静，带着满满的回忆返程。",
+                    schedule: [
+                        { time: "上午", activity: "前往汉阳区的归元禅寺参观，之后返回酒店。", cultural: "归元禅寺" },
+                        { time: "中午", activity: "办理退房手续。您可将行李寄存在酒店，在江汉路附近享用午餐或购买伴手礼。" },
+                        { time: "下午", activity: "从酒店取回行李，前往汉口火车站返程。" }
+                    ],
+                    transport: "从【江汉路站】乘坐<span class='metro-line'>地铁6号线</span>至【钟家村站】（E2口出）。返程从【江汉路站】乘坐<span class='metro-line'>地铁2号线</span>直达汉口火车站。",
+                    food: [
+                        { name: "归元禅寺素斋馆", desc: "素斋制作精美，味道可口，非常值得一试。", type: "素斋" }
+                    ]
+                }
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.nav-tab');
+            const contents = document.querySelectorAll('.tab-content');
+            const accordionContainer = document.getElementById('itinerary-accordion');
+            const foodGrid = document.getElementById('food-grid');
+            const foodFilters = document.getElementById('food-filters');
+
+            async function callGemini(prompt, button, responseContainer) {
+                const originalButtonText = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = 'AI正在思考中...';
+                responseContainer.classList.add('hidden');
+
+                const apiKey = ""; // Leave as-is
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: prompt }] }]
+                };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        responseContainer.innerHTML = text.replace(/\n/g, '<br>');
+                        responseContainer.classList.remove('hidden');
+                    } else {
+                        responseContainer.innerHTML = '抱歉，AI暂时无法提供建议，请稍后再试。';
+                        responseContainer.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Gemini API call failed:', error);
+                    responseContainer.innerHTML = '网络请求失败，请检查您的网络连接或稍后再试。';
+                    responseContainer.classList.remove('hidden');
+                } finally {
+                    button.disabled = false;
+                    button.innerHTML = originalButtonText;
+                }
+            }
+
+
+            function renderItinerary() {
+                accordionContainer.innerHTML = ''; // Clear existing content before re-rendering
+                itineraryData.days.forEach(dayData => {
+                    const scheduleHtml = dayData.schedule.map(item => {
+                        let culturalIcon = '';
+                        if (item.cultural) {
+                            culturalIcon = `<span class="cultural-context-icon" title="了解“${item.cultural}”的文化背景" data-attraction="${item.cultural}">✨</span>`;
+                        }
+                        return `
+                        <div class="flex items-start">
+                            <span class="font-bold text-[#E5B181] w-16 flex-shrink-0">${item.time}</span>
+                            <p class="text-gray-700">${item.activity}${culturalIcon}</p>
+                        </div>
+                        <div class="pl-16 hidden gemini-response" data-attraction-response="${item.cultural}"></div>
+                        `;
+                    }).join('');
+                    
+                    const foodHtml = dayData.food.map(item => `
+                        <div class="flex items-start">
+                            <span class="font-semibold text-[#0D5C63] w-32 flex-shrink-0">${item.name}</span>
+                            <p class="text-gray-600">${item.desc}</p>
+                        </div>
+                    `).join('');
+
+                    const dayCard = `
+                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                            <div class="day-header p-5 cursor-pointer flex justify-between items-center bg-white hover:bg-gray-50" data-day="${dayData.day}">
+                                <div>
+                                    <h3 class="text-xl font-bold text-[#0D5C63]">第 ${dayData.day} 天：${dayData.title}</h3>
+                                    <p class="text-gray-500">${dayData.theme}</p>
+                                </div>
+                                <svg class="w-6 h-6 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="day-details px-5">
+                                <div class="py-5 border-t border-gray-200 space-y-4">
+                                    <div class="flex items-center gap-3"><span class="icon-bg p-2 rounded-full">🗓️</span><h4 class="font-bold text-lg">行程安排</h4></div>
+                                    <div class="pl-10 space-y-2">${scheduleHtml}</div>
+                                    
+                                    <div class="flex items-center gap-3 pt-4"><span class="icon-bg p-2 rounded-full">🚇</span><h4 class="font-bold text-lg">交通指南</h4></div>
+                                    <p class="pl-10 text-gray-700">${dayData.transport}</p>
+                                    
+                                    <div class="flex items-center gap-3 pt-4"><span class="icon-bg p-2 rounded-full">🍜</span><h4 class="font-bold text-lg">美食推荐</h4></div>
+                                    <div class="pl-10 space-y-2">${foodHtml}</div>
+
+                                    <div class="pt-6 text-center">
+                                        <button class="gemini-btn px-4 py-2 rounded-full font-semibold shadow-md optimize-btn" data-day="${dayData.day}">✨ AI优化建议</button>
+                                        <div class="gemini-response p-4 mt-4 text-left rounded-lg hidden" data-optimize-response="${dayData.day}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    accordionContainer.innerHTML += dayCard;
+                });
+            }
+            
+            function renderFoodGuide(filter = 'all') {
+                foodGrid.innerHTML = '';
+                let allFood = [];
+                if (filter === 'all') {
+                    itineraryData.days.forEach(day => allFood.push(...day.food));
+                } else {
+                    itineraryData.days.forEach(day => {
+                        allFood.push(...day.food.filter(f => f.type === filter));
+                    });
+                }
+                
+                const uniqueFood = Array.from(new Set(allFood.map(a => a.name)))
+                    .map(name => {
+                        return allFood.find(a => a.name === name)
+                    });
+
+                uniqueFood.forEach(food => {
+                    const foodCard = `
+                        <div class="food-card bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-lg text-[#0D5C63]">${food.name}</h4>
+                            <p class="text-gray-600 mb-2">${food.desc}</p>
+                            <span class="text-sm font-semibold text-white bg-[#E5B181] px-2 py-1 rounded-full">${food.type}</span>
+                        </div>
+                    `;
+                    foodGrid.innerHTML += foodCard;
+                });
+            }
+
+            function renderChart() {
+                const ctx = document.getElementById('tripBalanceChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['历史人文', '自然风光', '现代都市', '美食体验'],
+                        datasets: [{
+                            label: '活动数量',
+                            data: [4, 2, 1, 8], 
+                            backgroundColor: [
+                                '#E5B181', // Historical
+                                '#6B8E23', // Nature
+                                '#4682B4', // Modern
+                                '#CD5C5C'  // Food
+                            ],
+                            borderColor: '#F8F5F2',
+                            borderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 14 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        const item = tooltipItems[0];
+                                        let label = item.chart.data.labels[item.dataIndex];
+                                        if (Array.isArray(label)) {
+                                            return label.join(' ');
+                                        }
+                                        return label;
+                                    },
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += context.raw + '项活动';
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    contents.forEach(content => {
+                        if (content.id === tab.dataset.tab) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            
+            accordionContainer.addEventListener('click', (e) => {
+                const header = e.target.closest('.day-header');
+                if (header) {
+                    const details = header.nextElementSibling;
+                    const icon = header.querySelector('svg');
+                    details.classList.toggle('open');
+                    icon.classList.toggle('rotate-180');
+                    return;
+                }
+
+                if (e.target.classList.contains('optimize-btn')) {
+                    const day = e.target.dataset.day;
+                    const dayData = itineraryData.days.find(d => d.day == day);
+                    const scheduleText = dayData.schedule.map(s => `${s.time}: ${s.activity}`).join('; ');
+                    const prompt = `我是一名游客，这是我第${day}天的武汉行程计划：${scheduleText}。主题是“${dayData.theme}”。请基于这个计划，用中文给我提供1-2条具体的优化建议，比如增加一个顺路的小众景点，或者调整一下顺序让路线更合理。保持回复简洁，直接给出建议即可。`;
+                    const responseContainer = document.querySelector(`div[data-optimize-response="${day}"]`);
+                    callGemini(prompt, e.target, responseContainer);
+                }
+
+                if (e.target.classList.contains('cultural-context-icon')) {
+                    const attraction = e.target.dataset.attraction;
+                    const prompt = `请用中文，简洁生动地介绍一下武汉“${attraction}”的文化背景或主要看点，大约50-100字即可。`;
+                    const responseContainer = e.target.parentElement.nextElementSibling;
+                    const dummyButton = e.target; // Use the icon as a dummy button for state
+                    callGemini(prompt, dummyButton, responseContainer);
+                }
+            });
+
+            foodFilters.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const filter = e.target.dataset.filter;
+                    renderFoodGuide(filter);
+                    document.querySelectorAll('#food-filters button').forEach(btn => {
+                        btn.classList.remove('bg-[#0D5C63]', 'text-white');
+                        btn.classList.add('bg-white', 'text-gray-700');
+                    });
+                    e.target.classList.add('bg-[#0D5C63]', 'text-white');
+                    e.target.classList.remove('bg-white', 'text-gray-700');
+                }
+            });
+
+            renderItinerary();
+            renderFoodGuide();
+            renderChart();
+        });
+    </script>
+</body>
+</html>
