@@ -181,7 +181,7 @@
                     theme: "感受百年商业街的繁华与长江的壮阔。",
                     schedule: [
                         { time: "上午", activity: "抵达汉口火车站，前往酒店办理入住，稍作休整。" },
-                        { time: "下午", activity: "闲逛江汉路步行街，之后步行前往黎黄陂路，感受“街头博物馆”的文艺气息。" },
+                        { time: "下午", activity: "闲逛江汉路步行街，之后步行前往黎黄陂路，感受“街头博物馆”的文艺气息。", cultural: "黎黄陂路" },
                         { time: "晚上", activity: "步行至汉口江滩，乘坐长江游船，欣赏壮丽的长江灯光秀和两岸夜景。" }
                     ],
                     transport: "今日行程均在酒店步行范围内，无需乘坐公共交通。",
@@ -223,7 +223,7 @@
                     transport: "从【江汉路站】乘坐<span class='metro-line'>地铁2号线</span>直达【光谷广场站】。从光谷乘<span class='metro-line'>地铁2号线</span>至【街道口站】前往武大。武大、东湖、博物馆三地相连，建议步行或骑行。",
                     food: [
                         { name: "光谷美食", desc: "光谷步行街及周边商场餐厅众多，选择极其丰富。", type: "正餐" },
-                        { name: "亢龙太子酒轩", desc: "（东湖店）高品质湖北菜。", type: "正餐" },
+                        { name: "湖滨客舍", desc: "（东湖店）环境优美的园林餐厅，主打精致湖北菜。", type: "正餐" },
                         { name: "武大周边小吃街", desc: "性价比高，种类繁多。", type: "小吃" }
                     ]
                 },
@@ -232,11 +232,11 @@
                     title: "禅意与告别",
                     theme: "在古寺中寻求宁静，带着满满的回忆返程。",
                     schedule: [
-                        { time: "上午", activity: "前往汉阳区的归元禅寺参观，之后返回酒店。", cultural: "归元禅寺" },
-                        { time: "中午", activity: "办理退房手续。您可将行李寄存在酒店，在江汉路附近享用午餐或购买伴手礼。" },
+                        { time: "上午", activity: "前往汉阳区的归元禅寺参观。", cultural: "归元禅寺" },
+                        { time: "中午", activity: "从归元禅寺返回酒店，办理退房手续。您可将行李寄存在酒店，在江汉路附近享用午餐或购买伴手礼。" },
                         { time: "下午", activity: "从酒店取回行李，前往汉口火车站返程。" }
                     ],
-                    transport: "从【江汉路站】乘坐<span class='metro-line'>地铁6号线</span>至【钟家村站】（E2口出）。返程从【江汉路站】乘坐<span class='metro-line'>地铁2号线</span>直达汉口火车站。",
+                    transport: "从【江汉路站】乘坐<span class='metro-line'>地铁6号线</span>至【钟家村站】（E2口出），参观后原路返回酒店。从酒店去火车站，乘坐<span class='metro-line'>地铁2号线</span>直达。",
                     food: [
                         { name: "归元禅寺素斋馆", desc: "素斋制作精美，味道可口，非常值得一试。", type: "素斋" }
                     ]
@@ -253,8 +253,14 @@
 
             async function callGemini(prompt, button, responseContainer) {
                 const originalButtonText = button.innerHTML;
-                button.disabled = true;
-                button.innerHTML = 'AI正在思考中...';
+                const isIconButton = button.tagName !== 'BUTTON';
+                
+                if(!isIconButton) {
+                    button.disabled = true;
+                    button.innerHTML = 'AI正在思考中...';
+                } else {
+                    button.innerHTML = '...';
+                }
                 responseContainer.classList.add('hidden');
 
                 const apiKey = ""; // Leave as-is
@@ -292,8 +298,12 @@
                     responseContainer.innerHTML = '网络请求失败，请检查您的网络连接或稍后再试。';
                     responseContainer.classList.remove('hidden');
                 } finally {
-                    button.disabled = false;
-                    button.innerHTML = originalButtonText;
+                     if(!isIconButton) {
+                        button.disabled = false;
+                        button.innerHTML = originalButtonText;
+                    } else {
+                        button.innerHTML = '✨';
+                    }
                 }
             }
 
@@ -390,7 +400,7 @@
                         labels: ['历史人文', '自然风光', '现代都市', '美食体验'],
                         datasets: [{
                             label: '活动数量',
-                            data: [4, 2, 1, 8], 
+                            data: [5, 2, 1, 8], 
                             backgroundColor: [
                                 '#E5B181', // Historical
                                 '#6B8E23', // Nature
