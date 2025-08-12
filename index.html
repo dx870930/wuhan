@@ -132,7 +132,6 @@
                         <button data-filter="all" class="px-4 py-2 bg-[#0D5C63] text-white rounded-full font-semibold shadow-md">全部</button>
                         <button data-filter="小吃" class="px-4 py-2 bg-white text-gray-700 rounded-full font-semibold shadow-md">风味小吃</button>
                         <button data-filter="正餐" class="px-4 py-2 bg-white text-gray-700 rounded-full font-semibold shadow-md">特色正餐</button>
-                        <button data-filter="素斋" class="px-4 py-2 bg-white text-gray-700 rounded-full font-semibold shadow-md">禅心素斋</button>
                     </div>
                     <div id="food-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Food cards will be injected here -->
@@ -155,7 +154,7 @@
                             <li><strong>汉口火车站 → 酒店：</strong>乘坐 <span class="metro-line">地铁2号线</span> 直达【江汉路站】。</li>
                             <li><strong>前往黄鹤楼：</strong>从【江汉路站】乘 <span class="metro-line">地铁6号线</span> 换乘 <span class="metro-line">地铁5号线</span> 至【司门口黄鹤楼站】。</li>
                             <li><strong>前往光谷：</strong>从【江汉路站】乘坐 <span class="metro-line">地铁2号线</span> 一路直达【光谷广场站】。</li>
-                            <li><strong>前往归元禅寺：</strong>从【江汉路站】乘坐 <span class="metro-line">地铁6号线</span> 直达【钟家村站】。</li>
+                            <li><strong>前往古德寺：</strong>从【江汉路站】乘 <span class="metro-line">地铁2号线</span> 换乘 <span class="metro-line">地铁1号线</span> 至【头道街站】。</li>
                         </ul>
                     </div>
                      <div class="p-4 border border-gray-200 rounded-lg bg-teal-50">
@@ -187,9 +186,7 @@
                     transport: "今日行程均在酒店步行范围内，无需乘坐公共交通。",
                     food: [
                         { name: "蔡林记", desc: "品尝招牌热干面、三鲜豆皮。", type: "小吃" },
-                        { name: "严氏烧麦", desc: "（前进五路店）品尝重油胡椒烧麦。", type: "小吃" },
-                        { name: "汉口码头", desc: "（沿江大道店）品尝排骨藕汤、清蒸武昌鱼等正宗湖北菜。", type: "正餐" },
-                        { name: "肥肥虾庄", desc: "（江汉路总店）夏季品尝油焖大虾。", type: "正餐" }
+                        { name: "严氏烧麦", desc: "（前进五路店）品尝重油胡椒烧麦。", type: "小吃" }
                     ]
                 },
                 {
@@ -206,8 +203,7 @@
                         { name: "徐嫂糊汤粉", desc: "户部巷经典，鱼汤鲜美。", type: "小吃" },
                         { name: "何记豆皮", desc: "户部巷必吃，外酥里糯。", type: "小吃" },
                         { name: "石婆婆热干面", desc: "户部巷地道选择。", type: "小吃" },
-                        { name: "大水的店", desc: "昙华林文艺餐吧，环境舒适。", type: "正餐" },
-                        { name: "斑马创意餐厅", desc: "昙华林特色餐厅，适合拍照。", type: "正餐" }
+                        { name: "靓靓蒸虾", desc: "（雪松路总店）武汉宵夜的代表，品尝清蒸或油焖小龙虾。", type: "正餐" }
                     ]
                 },
                 {
@@ -218,27 +214,26 @@
                         { time: "上午", activity: "前往光谷，体验新潮的光谷空轨。" },
                         { time: "中午", activity: "在光谷商业区自由选择午餐。" },
                         { time: "下午", activity: "游览武汉大学，之后前往东湖风景区骑行或散步。" },
-                        { time: "晚上", activity: "18:30，参观湖北省博物馆。", cultural: "湖北省博物馆" }
+                        { time: "晚上", activity: "在武大或东湖附近品尝小吃，之后18:30参观湖北省博物馆。", cultural: "湖北省博物馆" }
                     ],
                     transport: "从【江汉路站】乘坐<span class='metro-line'>地铁2号线</span>直达【光谷广场站】。从光谷乘<span class='metro-line'>地铁2号线</span>至【街道口站】前往武大。武大、东湖、博物馆三地相连，建议步行或骑行。",
                     food: [
-                        { name: "光谷美食", desc: "光谷步行街及周边商场餐厅众多，选择极其丰富。", type: "正餐" },
-                        { name: "湖滨客舍", desc: "（东湖店）环境优美的园林餐厅，主打精致湖北菜。", type: "正餐" },
-                        { name: "武大周边小吃街", desc: "性价比高，种类繁多。", type: "小吃" }
+                        { name: "江南小观园", desc: "（武大店）被誉为“武大校外食堂”，品尝地道湖北菜。", type: "正餐" },
+                        { name: "武大周边小吃", desc: "珞珈山、广八路附近有众多小吃摊点，选择多样。", type: "小吃" }
                     ]
                 },
                 {
                     day: 4,
-                    title: "禅意与告别",
-                    theme: "在古寺中寻求宁静，带着满满的回忆返程。",
+                    title: "异域风情与告别",
+                    theme: "在独特的古寺中感受宁静，带着满满的回忆返程。",
                     schedule: [
-                        { time: "上午", activity: "前往汉阳区的归元禅寺参观。", cultural: "归元禅寺" },
-                        { time: "中午", activity: "从归元禅寺返回酒店，办理退房手续。您可将行李寄存在酒店，在江汉路附近享用午餐或购买伴手礼。" },
+                        { time: "上午", activity: "前往汉口区的古德寺参观，感受其独特的异域建筑风格。", cultural: "古德寺" },
+                        { time: "中午", activity: "从古德寺返回酒店，办理退房手续。您可将行李寄存在酒店，在江汉路附近享用午餐或购买伴手礼。" },
                         { time: "下午", activity: "从酒店取回行李，前往汉口火车站返程。" }
                     ],
-                    transport: "从【江汉路站】乘坐<span class='metro-line'>地铁6号线</span>至【钟家村站】（E2口出），参观后原路返回酒店。从酒店去火车站，乘坐<span class='metro-line'>地铁2号线</span>直达。",
+                    transport: "从【江汉路站】乘坐<span class='metro-line'>地铁2号线</span>换乘<span class='metro-line'>地铁1号线</span>至【头道街站】，出站后步行或骑行一小段距离即可到达。参观后原路返回酒店。",
                     food: [
-                        { name: "归元禅寺素斋馆", desc: "素斋制作精美，味道可口，非常值得一试。", type: "素斋" }
+                        { name: "江汉路周边", desc: "在离开前，可以在江汉路附近再品尝一次心仪的武汉小吃或选择一家餐厅用餐。", type: "小吃" }
                     ]
                 }
             ]
@@ -400,7 +395,7 @@
                         labels: ['历史人文', '自然风光', '现代都市', '美食体验'],
                         datasets: [{
                             label: '活动数量',
-                            data: [5, 2, 1, 8], 
+                            data: [5, 2, 1, 6], 
                             backgroundColor: [
                                 '#E5B181', // Historical
                                 '#6B8E23', // Nature
